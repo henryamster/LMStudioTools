@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@lmstudio/sdk": "^1.1.0",
+    "node-abort-controller": "^3.1.1",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.18.1"
+  },
+  "scripts": {
+    "bs": "tsc Gemma3LMStudio.ts server.ts --esModuleInterop --module commonjs --target es2017 --outDir dist && cp public/index.html dist/ && node dist/server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/node-fetch": "^2.6.12",
+    "@types/ws": "^8.18.1"
+  }
+}

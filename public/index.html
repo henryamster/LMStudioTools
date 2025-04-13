@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LM Studio Chat Room</title>
+    <style>
+        /* Adjust text size, padding, and margin for better alignment */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* Simplified styles for foldable sections */
+        .personality-manager, .spawn-personalities {
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .personality-manager h2, .spawn-personalities h2 {
+            cursor: pointer;
+            margin: 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .content {
+            padding: 10px;
+        }
+
+        .collapsed .content {
+            display: none;
+        }
+
+        button {
+            font-size: 0.9em;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #toggle-add-personality-btn, #toggle-spawn-personalities-btn {
+            background-color: #007aff;
+            color: white;
+        }
+
+        #save-personality-btn, #spawn-participants-btn {
+            background-color: #34c759;
+            color: white;
+        }
+
+        #cancel-add-btn, #cancel-spawn-btn {
+            background-color: #8e8e93;
+            color: white;
+        }
+
+        #chatbox {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .bubble {
+            background-color: #007aff;
+            color: white;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .message.ai .bubble {
+            background-color: #e5e5ea;
+            color: black;
+        }
+
+        .bubble {
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .input-area-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #dcdcdc;
+        }
+
+        /* Adjust input and label styles to match the iMessage theme */
+        input[type="text"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: 1px solid #dcdcdc;
+            border-radius: 20px;
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 5px rgba(0, 122, 255, 0.5);
+        }
+
+        input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: 1px solid #dcdcdc;
+            border-radius: 20px;
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 5px rgba(0, 122, 255, 0.5);
+        }
+
+        label {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* Align send button and input on the same line */
+        .input-flex-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #dcdcdc;
+            border-radius: 20px;
+            font-size: 1em;
+        }
+
+        #send-button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+
+        #spawn-personalities-form, #add-personality-form {
+            margin-top: 15px;
+            border-top: 1px solid #e5e5ea;
+            padding-top: 15px;
+        }
+
+        .input-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .input-controls label {
+            margin: 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .input-controls select, .input-controls input[type="checkbox"] {
+            margin-left: 5px;
+        }
+
+        /* Compact participant UI */
+        .personality-item {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            margin-bottom: 5px;
+            border: 1px solid #dcdcdc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .personality-item strong {
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .personality-item p {
+            font-size: 0.85em;
+            color: #555;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .personality-item .description.collapsed {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .personality-item .description.expanded {
+            white-space: normal;
+        }
+
+        .personality-item .actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .personality-item button {
+            font-size: 0.8em;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .personality-item .edit-btn {
+            background-color: #007aff;
+            color: white;
+        }
+
+        .personality-item .remove-btn {
+            background-color: #ff3b30;
+            color: white;
+        }
+
+        .personality-item .toggle-description-btn {
+            background-color: #34c759;
+            color: white;
+        }
+
+        .container {
+            height: auto;
+            max-height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Adjust styles for the target label */
+        .target-label {
+            font-size: 0.7em; /* Make the text smaller */
+            color: #888;
+            margin-bottom: 2px;
+            display: block; /* Ensure it appears on its own line */
+        }
+
+        /* Add styles for the chat room topic */
+        .chat-topic {
+            font-size: 1em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="titleHeader">
+            <h1>LM Studio Chat Room</h1>
+        </div>
+        <div class="personality-manager">
+            <h2>Manage Personalities</h2>
+            <div class="content">
+                <div id="personality-list">
+                    <p class="text-sm text-gray-500">Loading personalities...</p>
+                </div>
+                <button id="toggle-add-personality-btn">Add New</button>
+                <div id="add-personality-form" style="display: none; margin-top: 15px; border-top: 1px solid #e5e5ea; padding-top: 15px;">
+                    <input type="hidden" id="edit-original-name">
+                    <div><label for="new-name">Name:</label><input type="text" id="new-name" required></div>
+                    <div><label for="new-personality">Personality Prompt:</label><textarea id="new-personality" rows="3" required></textarea></div>
+                    <div>
+                        <button type="submit" id="save-personality-btn">Save</button>
+                        <button type="button" id="cancel-add-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="spawn-personalities">
+            <h2>Spawn New Personalities</h2>
+            <div class="content">
+                <button id="toggle-spawn-personalities-btn">Spawn New</button>
+                <div id="spawn-personalities-form" style="display: none; margin-top: 15px; border-top: 1px solid #e5e5ea; padding-top: 15px;">
+                    <div><label for="spawn-prompt">Prompt:</label><textarea id="spawn-prompt" rows="3" required></textarea></div>
+                    <div><label for="spawn-count">Number of Participants:</label><input type="number" id="spawn-count" min="1" required></div>
+                    <div>
+                        <button type="button" id="spawn-participants-btn">Spawn</button>
+                        <button type="button" id="cancel-spawn-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatbox">
+             <div class="message system"><div class="bubble">Connecting...</div></div>
+        </div>
+
+        <div class="input-area-container">
+             <div class="input-controls">
+                  <label for="target-select">Target:</label>
+                  <select id="target-select">
+                      <option value="all">All</option>
+                  </select>
+                  <label for="model-select">Model:</label>
+                  <select id="model-select">
+                      <option value="default">Default (Gemma 3)</option>
+                      <option value="alternative">Alternative (Deepseek)</option>
+                  </select>
+                  <label for="skip-invalid-thoughts">Skip Invalid Thoughts:</label>
+                  <input type="checkbox" id="skip-invalid-thoughts">
+             </div>
+             <div class="input-flex-container">
+                <input type="text" id="message-input" placeholder="Type your message...">
+                <button id="send-button">&#9650;</button> </div>
+        </div>
+
+    </div> <script>
+        // <<< --- YOUR EXISTING JAVASCRIPT GOES HERE --- >>>
+        // Make sure the `displayMessage` function creates HTML
+        // structure that matches the CSS selectors (e.g., adds
+        // .message, .user/.ai, .bubble classes correctly).
+        // The JavaScript logic provided in the previous step
+        // should work with minor adjustments to the displayMessage
+        // function if needed based on the new HTML/CSS structure.
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Loaded");
+
+            // Element Refs
+            const chatbox = document.getElementById('chatbox');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const targetSelect = document.getElementById('target-select');
+            const modelSelect = document.getElementById('model-select');
+            const personalityListDiv = document.getElementById('personality-list');
+            const addPersonalityForm = document.getElementById('add-personality-form');
+            const cancelAddBtn = document.getElementById('cancel-add-btn');
+            const newNameInput = document.getElementById('new-name');
+            const newPersonalityInput = document.getElementById('new-personality');
+            const editOriginalNameInput = document.getElementById('edit-original-name');
+            const toggleAddPersonalityBtn = document.getElementById('toggle-add-personality-btn');
+
+            let currentProfiles = [];
+
+            // WebSocket Setup
+            const wsUrl = `ws://${window.location.host}`;
+            const ws = new WebSocket(wsUrl);
+
+            // Add logging to confirm WebSocket connection and profilesUpdate handling
+            ws.onopen = () => {
+                console.log('WebSocket connection established.');
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                chatbox.innerHTML = '';
+                displayMessage('system', null, 'Connected.');
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log('WebSocket message received:', message); // Log the entire message
+
+                if (message.type === 'profilesUpdate') {
+                    console.log('Profiles update received:', message.profiles); // Log profiles update
+                    currentProfiles = message.profiles || [];
+                    renderPersonalityList(); // Call renderPersonalityList immediately
+                    populateTargetDropdown(currentProfiles);
+                } else if (message.type === 'info') {
+                    displayMessage('system', null, message.message);
+                } else if (message.type === 'ai') {
+                    displayMessage('ai', message.name, message.content, message.modelUsed, message.thoughts || [], message.target || null);
+                } else if (message.type === 'error') {
+                    alert(`Error: ${message.message}`);
+                }
+
+                console.log('WebSocket message handling completed.'); // Log after handling
+            };
+
+            // Add logging to debug DOM updates in renderPersonalityList
+            function renderPersonalityList() {
+                console.log('Rendering personality list with profiles:', currentProfiles);
+                const personalityListDiv = document.getElementById('personality-list');
+                personalityListDiv.innerHTML = ''; // Clear list
+
+                if (currentProfiles.length === 0) {
+                    console.log('No profiles to render.');
+                    personalityListDiv.innerHTML = '<p style="font-size: 0.85em; color: #666;">No personalities defined.</p>';
+                    return;
+                }
+
+                currentProfiles.forEach(profile => {
+                    console.log('Rendering profile:', profile);
+                    const div = document.createElement('div');
+                    div.classList.add('personality-item');
+
+                    const textDiv = document.createElement('div');
+                    textDiv.innerHTML = `<strong>${profile.name}</strong>`;
+
+                    const description = document.createElement('p');
+                    description.classList.add('description', 'collapsed');
+                    description.textContent = profile.personality;
+
+                    const toggleDescriptionBtn = document.createElement('button');
+                    toggleDescriptionBtn.textContent = 'Show More';
+                    toggleDescriptionBtn.classList.add('toggle-description-btn');
+                    toggleDescriptionBtn.addEventListener('click', () => {
+                        const isCollapsed = description.classList.toggle('collapsed');
+                        description.classList.toggle('expanded', !isCollapsed);
+                        toggleDescriptionBtn.textContent = isCollapsed ? 'Show More' : 'Show Less';
+                    });
+
+                    const btnDiv = document.createElement('div');
+                    btnDiv.classList.add('actions');
+
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.classList.add('edit-btn');
+                    editBtn.onclick = () => handleEditPersonality(profile.name);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.classList.add('remove-btn');
+                    removeBtn.onclick = () => handleRemovePersonality(profile.name);
+
+                    btnDiv.append(toggleDescriptionBtn, editBtn, removeBtn);
+                    div.append(textDiv, description, btnDiv);
+                    personalityListDiv.appendChild(div);
+                });
+                console.log('Personality list rendered successfully.');
+            }
+
+            function populateTargetDropdown(profiles) {
+                console.log('Populating target dropdown with profiles:', profiles);
+                const targetSelect = document.getElementById('target-select');
+                targetSelect.innerHTML = '<option value="all">All</option>'; // Reset options
+                profiles.forEach(profile => {
+                    const option = document.createElement('option');
+                    option.value = profile.name.toLowerCase();
+                    option.textContent = profile.name;
+                    targetSelect.appendChild(option);
+                });
+            }
+
+             // Helper: Reset/Hide Add Form (Adjusted for CSS class)
+             function resetAndHideAddForm() {
+                 newNameInput.value = '';
+                 newPersonalityInput.value = '';
+                 editOriginalNameInput.value = '';
+                 addPersonalityForm.style.display = 'none'; // Use style directly
+                 toggleAddPersonalityBtn.textContent = 'Add New';
+                 const savePersonalityBtn = document.getElementById('save-personality-btn'); // Ensure button is queried
+                 savePersonalityBtn.textContent = 'Save';
+             }
+
+            // --- Event Handlers (mostly same logic) ---
+             toggleAddPersonalityBtn.addEventListener('click', () => {
+                 const isVisible = addPersonalityForm.style.display === 'block';
+                 addPersonalityForm.style.display = isVisible ? 'none' : 'block';
+                 toggleAddPersonalityBtn.textContent = isVisible ? 'Add New' : 'Hide Form';
+             });
+
+             cancelAddBtn.addEventListener('click', resetAndHideAddForm);
+
+             function handleEditPersonality(name) {
+                 const profile = currentProfiles.find(profile => profile.name === name);
+                 if (!profile) {
+                     alert(`Personality "${name}" not found.`);
+                     return;
+                 }
+
+                 // Populate the form with the profile data
+                 editOriginalNameInput.value = profile.name;
+                 newNameInput.value = profile.name;
+                 newPersonalityInput.value = profile.personality;
+
+                 // Show the form
+                 addPersonalityForm.style.display = 'block';
+                 toggleAddPersonalityBtn.textContent = 'Hide Form';
+                 savePersonalityBtn.textContent = 'Save Changes';
+             }
+
+             function handleRemovePersonality(name) {
+                 ws.send(JSON.stringify({
+                     type: 'removePersonality',
+                     name,
+                 }));
+             }
+
+             // --- WebSocket Event Listeners (same logic) ---
+            ws.onopen = () => { console.log('WS Open'); messageInput.disabled = false; sendButton.disabled = false; chatbox.innerHTML=''; displayMessage('system', null, 'Connected.'); };
+            ws.onerror = (error) => { console.error('WS Error:', error); displayMessage('error', null, 'Connection error.'); messageInput.disabled = true; sendButton.disabled = true; };
+            ws.onclose = () => { console.log('WS Close'); displayMessage('system', null, 'Disconnected.'); messageInput.disabled = true; sendButton.disabled = true; };
+
+            // --- Client UI Event Listeners (same logic) ---
+            function sendMessage() {
+                const content = messageInput.value.trim();
+                if (!content) return;
+
+                ws.send(JSON.stringify({
+                    type: 'user',
+                    content,
+                    target: targetSelect.value,
+                    model: modelSelect.value,
+                    skipInvalidThoughts: document.getElementById('skip-invalid-thoughts').checked,
+                }));
+
+                displayMessage('user', 'You', content, null, [], targetSelect.value);
+                messageInput.value = '';
+            }
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+            // Use event delegation for the save button
+            document.body.addEventListener('click', (event) => {
+                if (event.target && event.target.id === 'save-personality-btn') {
+                    event.preventDefault();
+                    console.log('Save button clicked');
+
+                    const newProfile = {
+                        name: newNameInput.value.trim(),
+                        personality: newPersonalityInput.value.trim(),
+                    };
+
+                    console.log('New profile data:', newProfile);
+                    console.log('WebSocket readyState:', ws.readyState);
+
+                    if (editOriginalNameInput.value) {
+                        console.log('Updating existing personality:', editOriginalNameInput.value);
+                        ws.send(JSON.stringify({
+                            type: 'updatePersonality',
+                            name: editOriginalNameInput.value,
+                            profile: newProfile,
+                        }));
+                    } else {
+                        console.log('Adding new personality:', newProfile);
+                        ws.send(JSON.stringify({
+                            type: 'addPersonality',
+                            profile: newProfile,
+                        }));
+                    }
+
+                    resetAndHideAddForm();
+                }
+            });
+
+            // Add toggle functionality for the Spawn New Personalities section
+            const toggleSpawnPersonalitiesBtn = document.getElementById('toggle-spawn-personalities-btn');
+            const spawnPersonalitiesForm = document.getElementById('spawn-personalities-form');
+
+            toggleSpawnPersonalitiesBtn.addEventListener('click', () => {
+                const isVisible = spawnPersonalitiesForm.style.display === 'block';
+                spawnPersonalitiesForm.style.display = isVisible ? 'none' : 'block';
+                toggleSpawnPersonalitiesBtn.textContent = isVisible ? 'Spawn New' : 'Hide Form';
+            });
+
+            const cancelSpawnBtn = document.getElementById('cancel-spawn-btn');
+            cancelSpawnBtn.addEventListener('click', () => {
+                spawnPersonalitiesForm.style.display = 'none';
+                toggleSpawnPersonalitiesBtn.textContent = 'Spawn New';
+            });
+
+            const spawnButton = document.getElementById('spawn-participants-btn');
+            spawnButton.addEventListener('click', () => {
+                const countInput = document.getElementById('spawn-count');
+                const promptInput = document.getElementById('spawn-prompt');
+
+                const count = parseInt(countInput.value, 10);
+                const prompt = promptInput.value.trim();
+
+                if (!count || count <= 0 || !prompt) {
+                    alert('Please provide a valid number of participants and a prompt.');
+                    return;
+                }
+
+                ws.send(JSON.stringify({
+                    type: 'spawnParticipants',
+                    count,
+                    prompt
+                }));
+
+                countInput.value = '';
+                promptInput.value = '';
+                spawnPersonalitiesForm.style.display = 'none';
+                toggleSpawnPersonalitiesBtn.textContent = 'Spawn New';
+            });
+
+            // Initial State
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            // Fix toggle functionality to ensure event listeners remain intact
+            const toggleSection = (section) => {
+                const content = section.querySelector('.content');
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                } else {
+                    content.style.display = 'none';
+                }
+            };
+
+            const personalityManager = document.querySelector('.personality-manager');
+            const spawnPersonalities = document.querySelector('.spawn-personalities');
+
+            personalityManager.querySelector('h2').addEventListener('click', () => {
+                toggleSection(personalityManager);
+            });
+
+            spawnPersonalities.querySelector('h2').addEventListener('click', () => {
+                toggleSection(spawnPersonalities);
+            });
+
+            // Ensure sections are initialized with proper visibility
+            [personalityManager, spawnPersonalities].forEach(section => {
+                const content = section.querySelector('.content');
+                content.style.display = 'block'; // Default to visible
+            });
+
+            // Add a reference to the chat topic display
+            const chatTopicDisplay = document.createElement('div');
+            chatTopicDisplay.classList.add('chat-topic');
+            chatTopicDisplay.textContent = 'No topic set';
+            chatbox.parentNode.insertBefore(chatTopicDisplay, chatbox);
+
+            // Add a function to update the chat topic
+            function updateChatTopic(newTopic) {
+                chatTopicDisplay.textContent = newTopic ? `Topic: ${newTopic}` : 'No topic set';
+            }
+
+            // Add a button and input field to set the chat topic
+            const topicInputContainer = document.createElement('div');
+            topicInputContainer.style.marginBottom = '10px';
+            topicInputContainer.style.textAlign = 'center';
+            topicInputContainer.style.display = 'flex';
+
+            const topicInput = document.createElement('input');
+            topicInput.type = 'text';
+            topicInput.placeholder = 'Set a chat topic...';
+            topicInput.style.marginRight = '10px';
+
+            const setTopicButton = document.createElement('button');
+            setTopicButton.textContent = 'Set Topic';
+            setTopicButton.onclick = () => {
+                const newTopic = topicInput.value.trim();
+                if (newTopic) {
+                    ws.send(JSON.stringify({ type: 'setTopic', topic: newTopic }));
+                    updateChatTopic(newTopic);
+                    topicInput.value = '';
+                }
+            };
+
+            topicInputContainer.appendChild(topicInput);
+            topicInputContainer.appendChild(setTopicButton);
+            chatbox.parentNode.insertBefore(topicInputContainer, chatTopicDisplay);
+
+            // Update the chat topic when receiving a message
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log('WebSocket message received:', message); // Log the entire message
+
+                if (message.type === 'profilesUpdate') {
+                    console.log('Profiles update received:', message.profiles); // Log profiles update
+                    currentProfiles = message.profiles || [];
+                    renderPersonalityList(); // Call renderPersonalityList immediately
+                    populateTargetDropdown(currentProfiles);
+                } else if (message.type === 'info') {
+                    displayMessage('system', null, message.message);
+                } else if (message.type === 'ai') {
+                    displayMessage('ai', message.name, message.content, message.modelUsed, message.thoughts || [], message.target || null);
+                } else if (message.type === 'error') {
+                    alert(`Error: ${message.message}`);
+                }
+
+                console.log('WebSocket message handling completed.'); // Log after handling
+
+                if (message.type === 'info' && message.message.startsWith('Chat room topic updated to:')) {
+                    const newTopic = message.message.replace('Chat room topic updated to: ', '').trim();
+                    updateChatTopic(newTopic);
+                }
+
+                // ...existing code for handling other message types...
+            };
+
+        }); // End DOMContentLoaded
+
+        // Define the parseMarkdown function
+        function parseMarkdown(content) {
+            // Update regex to match *this* instead of *[this]* and replace with <strong>this</strong>
+            return content.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+        }
+
+        // Define the displayMessage function to handle message rendering
+        function displayMessage(type, sender, content, modelUsed = null, thoughts = [], target = null) {
+            console.log(`[displayMessage] Type: ${type}, Sender: ${sender}, Model: ${modelUsed}, Target: ${target}`);
+            console.log("[displayMessage] Raw content received:", JSON.stringify(content));
+
+            const chatbox = document.getElementById('chatbox');
+            const msgContainer = document.createElement('div');
+            msgContainer.classList.add('message', type);
+
+            if (target) {
+                const targetLabel = document.createElement('span');
+                targetLabel.classList.add('target-label');
+                targetLabel.textContent = `(to ${target})`;
+                msgContainer.appendChild(targetLabel);
+            }
+
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+
+            if (type === 'ai' || type === 'user') {
+                bubble.innerHTML = parseMarkdown(content); // Parse markdown before rendering
+            } else {
+                bubble.textContent = content; // Render plain text for system/error messages
+            }
+
+            if (type === 'ai') {
+                const wrapper = document.createElement('div');
+                const senderDiv = document.createElement('div');
+                senderDiv.classList.add('sender-info');
+                senderDiv.textContent = sender || 'AI';
+                if (modelUsed) {
+                    senderDiv.textContent += ` (via ${modelUsed.split('/').pop()})`;
+                }
+                wrapper.appendChild(senderDiv);
+                wrapper.appendChild(bubble);
+
+                // Add thoughts section if thoughts exist
+                if (thoughts.length > 0) {
+                    const thoughtSection = document.createElement('div');
+                    thoughtSection.classList.add('thought-section');
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.classList.add('toggle-thoughts');
+                    toggleBtn.textContent = 'Show Thoughts';
+                    const thoughtBlock = document.createElement('div');
+                    thoughtBlock.classList.add('thought-block');
+                    thoughtBlock.textContent = thoughts.join('\n\n---\n\n'); // Join multiple thoughts
+
+                    toggleBtn.onclick = () => {
+                        const isVisible = thoughtBlock.classList.toggle('visible');
+                        toggleBtn.textContent = isVisible ? 'Hide Thoughts' : 'Show Thoughts';
+                    };
+
+                    thoughtSection.appendChild(toggleBtn);
+                    thoughtSection.appendChild(thoughtBlock);
+                    wrapper.appendChild(thoughtSection);
+                }
+
+                msgContainer.appendChild(wrapper);
+            } else {
+                msgContainer.appendChild(bubble);
+            }
+
+            chatbox.appendChild(msgContainer);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
