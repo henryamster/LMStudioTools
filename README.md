@@ -54,7 +54,9 @@ LMStudioTools/
 ## Setup Instructions
 ### Prerequisites
 - **Node.js**: Ensure Node.js is installed on your system.
-- **LM Studio**: Install and configure LM Studio on your local machine.
+- **LM Studio**: Install and configure LM Studio on your local machine, then use developer mode to open it up for local access:
+- <img width="1500" alt="image" src="https://github.com/user-attachments/assets/d2c6fb5d-d9a0-47f0-8979-89e9526ea3b2" />
+
 
 ### LM Studio Setup
 1. Download and install LM Studio from the official website.
@@ -90,15 +92,7 @@ LMStudioTools/
 4. **Set Chat Topic**:
    - Enter a topic in the input field and click "Set Topic".
 
-## Diagrams
-### System Architecture
-```mermaid
-graph TD
-    A[User] -->|Interacts| B[Frontend (index.html)]
-    B -->|WebSocket| C[Backend (server.ts)]
-    C -->|API Calls| D[LM Studio SDK]
-    D -->|Processes Requests| E[AI Model]
-```
+
 
 ### Backend Workflow
 ```mermaid
