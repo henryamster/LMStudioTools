@@ -1,4 +1,5 @@
 # LM Studio Tools
+<img width="1490" alt="image" src="https://github.com/user-attachments/assets/8b1a4932-3126-40ec-9557-48dd77579d29" />
 
 ## Overview
 LM Studio Tools is a web-based chat room application that integrates with the LM Studio SDK to provide AI-driven conversational experiences. The application allows users to manage personalities, spawn new participants, and interact with AI models in real-time.
