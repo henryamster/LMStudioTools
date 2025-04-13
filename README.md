@@ -55,13 +55,15 @@ LMStudioTools/
 ### Prerequisites
 - **Node.js**: Ensure Node.js is installed on your system.
 - **LM Studio**: Install and configure LM Studio on your local machine, then use developer mode to open it up for local access:
-- <img width="1500" alt="image" src="https://github.com/user-attachments/assets/d2c6fb5d-d9a0-47f0-8979-89e9526ea3b2" />
 
 
+<img width="1500" alt="image" src="https://github.com/user-attachments/assets/d2c6fb5d-d9a0-47f0-8979-89e9526ea3b2" />
 ### LM Studio Setup
 1. Download and install LM Studio from the official website.
 2. Start the LM Studio server on your local machine.
 3. Note the WebSocket URL (e.g., `ws://localhost:1234`) for integration.
+4. Download the models you wish you use (gemma-3-27b-it-GGUF/gemma-3-27b-it-Q4_K_M.gguf and DeepSeek-R1-Distill-Qwen-7B-GGUF/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf)
+5. Load the models into LM Studio by selecting the model from the top dropdown in LM Studio
 
 ### Project Setup
 1. Clone the repository:
